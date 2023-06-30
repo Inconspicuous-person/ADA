@@ -7,7 +7,8 @@ private:
     static String LastLastPayload;
     static char *LastPayloadBuf;
     static char *LastLastPayloadBuf;
-    bool waitc = false;
+    static bool waitc;
+    static int CMD;
     // Sends an ACK signal
     static constexpr unsigned int djb2Hash(const char* str, int index = 0)
     {
@@ -45,15 +46,29 @@ private:
     static void DATA_INT()
     {
         LastLastPayload = LastPayload;
-        LastPayload = Serial.readString();
+        LastPayload = Serial.readStringUntil('\n');
         LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));
         LastLastPayload.toCharArray(LastLastPayloadBuf, sizeof(LastLastPayload));
-        PARSE_CMD();
+        if (!waitc){
+            PARSE_CMD();
+        }
+        else 
+        {
+            PARSE_DATA();
+        }
     }
+
+    static void PARSE_DATA() {
+
+
+    }
+
     static void PARSE_CMD() {
         switch (djb2Hash(LastPayloadBuf))
         {
-        case djb2Hash("ENCODE"):
+        case djb2Hash("REQ"):
+                waitc = false;
+                Serial.println("ACK");
             break;
         
         default:
@@ -61,13 +76,15 @@ private:
         }
         
     }
+
 public:
     // Initializes the IO MCU with specified baud rate
     bool initialize(int baud)
     {
+        waitc = false;
         Serial.begin(baud);
+        attachInterrupt(digitalPinToInterrupt(2), DATA_INT, RISING);
         delay(2000);
         return (REQ_ACK());
-        attachInterrupt(digitalPinToInterrupt(2), DATA_INT, RISING);
     }
 };

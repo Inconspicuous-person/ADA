@@ -6,12 +6,17 @@
 class Data_MCU
 {
 private:
+    static bool waitc;
     static String LastPayload;
     static String LastLastPayload;
     static char *LastPayloadBuf;
     static char *LastLastPayloadBuf;
 
     // Sends an ACK signal
+    static constexpr unsigned int djb2Hash(const char* str, int index = 0)
+    {
+        return !str[index] ? 0x1505 : (djb2Hash(str, index + 1) * 0x21) ^ str[index];
+    }
     void ACK()
     {
         Serial.print("ACK");
@@ -42,31 +47,53 @@ private:
     // Interrupt handler for receiving data
     static void DATA_INT()
     {
-        Serial.println("DATA INT"); // Placeholder
         LastLastPayload = LastPayload;
-        LastPayload = Serial.readString();
+        LastPayload = Serial.readStringUntil('\n');
         LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));
         LastLastPayload.toCharArray(LastLastPayloadBuf, sizeof(LastLastPayload));
-        if (LastLastPayloadBuf == "1")
-        {
-            // Placeholder
+        if (!waitc){
+            PARSE_CMD();
         }
+        else 
+        {
+            PARSE_DATA();
+        }
+    }
+
+    static void PARSE_DATA() {
+
+
+    }
+
+    static void PARSE_CMD() {
+        switch (djb2Hash(LastPayloadBuf))
+        {
+        case djb2Hash("REQ"):
+                waitc = false;
+                Serial.println("ACK");
+            break;
+        
+        default:
+            break;
+        }
+        
     }
 
 public:
     // Initializes the Data MCU with specified baud rate
     bool initialize(int baud)
     {
+        waitc = false;
         Serial.begin(baud);
+        attachInterrupt(digitalPinToInterrupt(2), DATA_INT, RISING);
         delay(2000);
         return (REQ_ACK());
-        attachInterrupt(digitalPinToInterrupt(2), DATA_INT, RISING);
     }
 
     // Serializes downlink telemetry payload and sends it
     String SerializeDownlink(Telemetry_downlink down_payload)
     {
-        Serial.print("Encode"); // Placeholder
+        Serial.println("ENCODE"); // Placeholder
         Serial.print(DownlinkToCSV(down_payload));
     }
 };
@@ -117,7 +144,7 @@ public:
     // Sends a heartbeat payload to the Data MCU
     void heartbeet(Heartbeet heartbeet)
     {
-        Serial.println(1); // Payload type 1 for Heartbeet
+        Serial.println("ENCODE"); 
         Serial.print(HeartbeetToCSV(heartbeet));
     }
 };
