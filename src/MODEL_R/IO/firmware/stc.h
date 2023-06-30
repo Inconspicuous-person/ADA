@@ -6,7 +6,16 @@ String DownlinkToCSV(const Telemetry_downlink &data)
 {
     String csvString;
 
-    // Append each struct member to the string
+    // Append the column headers to the CSV string
+    csvString += "status,baro_alt,gnss_alt,gnss_lat,gnss_lon,";
+    csvString += "motor_one_err,motor_two_err,motor_three_err,motor_four_err,motor_five_err,motor_six_err,";
+    csvString += "motor_one_en,motor_two_en,motor_three_en,motor_four_en,motor_five_en,motor_six_en,";
+    csvString += "arm_one_locked,arm_two_locked,arm_three_locked,arm_four_locked,arm_five_locked,arm_six_locked,";
+    csvString += "arm_one_axis,arm_two_axis,arm_three_axis,arm_four_axis,arm_five_axis,arm_six_axis,";
+    csvString += "accel_x,accel_y,accel_z,gyro_x,gyro_y,gyro_z,IO_DATA_COMM,IO_ACCELGYRO_COMM,";
+    csvString += "batt_volts,batt_amps,checksum\n";
+
+    // Append the data values to the CSV string
     csvString += String(data.status) + ",";
     csvString += String(data.baro_alt) + ",";
     csvString += String(data.gnss_alt) + ",";
@@ -46,9 +55,9 @@ String DownlinkToCSV(const Telemetry_downlink &data)
     csvString += String(data.IO_ACCELGYRO_COMM) + ",";
     csvString += String(data.batt_volts) + ",";
     csvString += String(data.batt_amps) + ",";
-    csvString += String(data.checksum);
+    csvString += String(data.checksum) + "\n";
 
-    // Return the comma-separated string
+    // Return the CSV string
     return csvString;
 }
 
@@ -57,7 +66,14 @@ String UplinkToCSV(const Commands_uplink &data)
 {
     String csvString;
 
-    // Append each struct member to the string
+    // Append the column headers to the CSV string
+    csvString += "type,motor_one_en,motor_two_en,motor_three_en,motor_four_en,motor_five_en,motor_six_en,";
+    csvString += "arm_one_axis,arm_two_axis,arm_three_axis,arm_four_axis,arm_five_axis,arm_six_axis,";
+    csvString += "arm_one_locked,arm_two_locked,arm_three_locked,arm_four_locked,arm_five_locked,arm_six_locked,";
+    csvString += "motor_one_speed,motor_two_speed,motor_three_speed,motor_four_speed,motor_five_speed,motor_six_speed,";
+    csvString += "motor_steps,turn_angle,checksum\n";
+
+    // Append the data values to the CSV string
     csvString += String(data.type) + ",";
     csvString += String(data.motor_one_en) + ",";
     csvString += String(data.motor_two_en) + ",";
@@ -87,40 +103,59 @@ String UplinkToCSV(const Commands_uplink &data)
     csvString += String(data.turn_angle) + ",";
     csvString += String(data.checksum);
 
-    // Return the comma-separated string
+    // Return the CSV string
     return csvString;
 }
+
 
 // Convert Telemetry_uplink struct to a CSV string
 String TeleUplinkToCSV(const Telemetry_uplink &data)
 {
     String csvString;
 
-    // Append each struct member to the string
+    // Append the column headers to the CSV string
+    csvString += "ground_status,checksum\n";
+
+    // Append the data values to the CSV string
     csvString += String(data.ground_status) + ",";
     csvString += String(data.checksum);
 
-    // Return the comma-separated string
+    // Return the CSV string
     return csvString;
 }
+
 
 // Convert Heartbeet struct to a CSV string
 String HeartbeetToCSV(const Heartbeet &data)
 {
     String csvString;
 
-    // Append each struct member to the string
+    // Append the column headers to the CSV string
+    csvString += "status,checksum\n";
+
+    // Append the data values to the CSV string
     csvString += String(data.status) + ",";
     csvString += String(data.checksum);
 
-    // Return the comma-separated string
+    // Return the CSV string
     return csvString;
 }
+
 
 // Convert CSV string to Telemetry_downlink struct
 Telemetry_downlink csvToDownlinkStruct(const char *csvString)
 {
     Telemetry_downlink data;
+
+    // Skip the first line (column names) by finding the end of the line
+    const char *lineEnd = strchr(csvString, '\n');
+    if (lineEnd == nullptr) {
+        // Invalid CSV string
+        return data;
+    }
+
+    // Move to the beginning of the data
+    csvString = lineEnd + 1;
 
     char csvCopy[200];
     strncpy(csvCopy, csvString, sizeof(csvCopy));
@@ -250,6 +285,203 @@ Telemetry_downlink csvToDownlinkStruct(const char *csvString)
             data.batt_amps = atof(token);
             break;
         case 39:
+            data.checksum = new char[strlen(token) + 1];
+            strcpy(data.checksum, token);
+            break;
+        default:
+            break;
+        }
+
+        token = strtok(nullptr, ",");
+        index++;
+    }
+
+    return data;
+}
+Commands_uplink csvToUplinkStruct(const char *csvString)
+{
+    Commands_uplink data;
+
+    const char *lineEnd = strchr(csvString, '\n');
+    if (lineEnd == nullptr) {
+        // Invalid CSV string
+        return data;
+    }
+
+    csvString = lineEnd + 1;
+
+    char csvCopy[200];
+    strncpy(csvCopy, csvString, sizeof(csvCopy));
+    csvCopy[sizeof(csvCopy) - 1] = '\0';
+
+    char *token = strtok(csvCopy, ",");
+    int index = 0;
+    while (token != nullptr)
+    {
+        switch (index)
+        {
+        case 0:
+            data.type = atoi(token);
+            break;
+        case 1:
+            data.motor_one_en = (atoi(token) != 0);
+            break;
+        case 2:
+            data.motor_two_en = (atoi(token) != 0);
+            break;
+        case 3:
+            data.motor_three_en = (atoi(token) != 0);
+            break;
+        case 4:
+            data.motor_four_en = (atoi(token) != 0);
+            break;
+        case 5:
+            data.motor_five_en = (atoi(token) != 0);
+            break;
+        case 6:
+            data.motor_six_en = (atoi(token) != 0);
+            break;
+        case 7:
+            data.arm_one_axis = atof(token);
+            break;
+        case 8:
+            data.arm_two_axis = atof(token);
+            break;
+        case 9:
+            data.arm_three_axis = atof(token);
+            break;
+        case 10:
+            data.arm_four_axis = atof(token);
+            break;
+        case 11:
+            data.arm_five_axis = atof(token);
+            break;
+        case 12:
+            data.arm_six_axis = atof(token);
+            break;
+        case 13:
+            data.arm_one_locked = (atoi(token) != 0);
+            break;
+        case 14:
+            data.arm_two_locked = (atoi(token) != 0);
+            break;
+        case 15:
+            data.arm_three_locked = (atoi(token) != 0);
+            break;
+        case 16:
+            data.arm_four_locked = (atoi(token) != 0);
+            break;
+        case 17:
+            data.arm_five_locked = (atoi(token) != 0);
+            break;
+        case 18:
+            data.arm_six_locked = (atoi(token) != 0);
+            break;
+        case 19:
+            data.motor_one_speed = atof(token);
+            break;
+        case 20:
+            data.motor_two_speed = atof(token);
+            break;
+        case 21:
+            data.motor_three_speed = atof(token);
+            break;
+        case 22:
+            data.motor_four_speed = atof(token);
+            break;
+        case 23:
+            data.motor_five_speed = atof(token);
+            break;
+        case 24:
+            data.motor_six_speed = atof(token);
+            break;
+        case 25:
+            data.motor_steps = atoi(token);
+            break;
+        case 26:
+            data.turn_angle = atof(token);
+            break;
+        case 27:
+            data.checksum = new char[strlen(token) + 1];
+            strcpy(data.checksum, token);
+            break;
+        default:
+            break;
+        }
+
+        token = strtok(nullptr, ",");
+        index++;
+    }
+
+    return data;
+}
+
+Telemetry_uplink csvToTeleUplinkStruct(const char *csvString)
+{
+    Telemetry_uplink data;
+
+    const char *lineEnd = strchr(csvString, '\n');
+    if (lineEnd == nullptr) {
+        // Invalid CSV string
+        return data;
+    }
+
+    csvString = lineEnd + 1;
+
+    char csvCopy[200];
+    strncpy(csvCopy, csvString, sizeof(csvCopy));
+    csvCopy[sizeof(csvCopy) - 1] = '\0';
+
+    char *token = strtok(csvCopy, ",");
+    int index = 0;
+    while (token != nullptr)
+    {
+        switch (index)
+        {
+        case 0:
+            data.ground_status = atoi(token);
+            break;
+        case 1:
+            data.checksum = new char[strlen(token) + 1];
+            strcpy(data.checksum, token);
+            break;
+        default:
+            break;
+        }
+
+        token = strtok(nullptr, ",");
+        index++;
+    }
+
+    return data;
+}
+
+Heartbeet csvToHeartbeetStruct(const char *csvString)
+{
+    Heartbeet data;
+
+    const char *lineEnd = strchr(csvString, '\n');
+    if (lineEnd == nullptr) {
+        // Invalid CSV string
+        return data;
+    }
+
+    csvString = lineEnd + 1;
+
+    char csvCopy[200];
+    strncpy(csvCopy, csvString, sizeof(csvCopy));
+    csvCopy[sizeof(csvCopy) - 1] = '\0';
+
+    char *token = strtok(csvCopy, ",");
+    int index = 0;
+    while (token != nullptr)
+    {
+        switch (index)
+        {
+        case 0:
+            data.status = atoi(token);
+            break;
+        case 1:
             data.checksum = new char[strlen(token) + 1];
             strcpy(data.checksum, token);
             break;
