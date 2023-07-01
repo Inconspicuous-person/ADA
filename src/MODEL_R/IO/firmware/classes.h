@@ -2,21 +2,24 @@
 #include "constants.h"
 #include "stc.h"
 
+    bool waitc;
+    String LastPayload;
+    String LastLastPayload;
+    char *LastPayloadBuf;
+    char *LastLastPayloadBuf;
+
 // Class representing the Data MCU
 class Data_MCU
 {
 private:
-    static bool waitc;
-    static String LastPayload;
-    static String LastLastPayload;
-    static char *LastPayloadBuf;
-    static char *LastLastPayloadBuf;
+
 
     // Sends an ACK signal
     static constexpr unsigned int djb2Hash(const char* str, int index = 0)
     {
         return !str[index] ? 0x1505 : (djb2Hash(str, index + 1) * 0x21) ^ str[index];
     }
+    
     void ACK()
     {
         Serial.print("ACK");
@@ -80,6 +83,7 @@ private:
     }
 
 public:
+
     // Initializes the Data MCU with specified baud rate
     bool initialize(int baud)
     {

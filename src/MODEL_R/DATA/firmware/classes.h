@@ -1,19 +1,22 @@
 #pragma once
 
+static String LastPayload;
+static String LastLastPayload;
+static char *LastPayloadBuf;
+static char *LastLastPayloadBuf;
+static bool waitc;
+int CMD;
+
 class IO_MCU
 {
 private:
-    static String LastPayload;
-    static String LastLastPayload;
-    static char *LastPayloadBuf;
-    static char *LastLastPayloadBuf;
-    static bool waitc;
-    static int CMD;
-    // Sends an ACK signal
+
+
     static constexpr unsigned int djb2Hash(const char* str, int index = 0)
     {
         return !str[index] ? 0x1505 : (djb2Hash(str, index + 1) * 0x21) ^ str[index];
     }
+
 
     void ACK()
     {
