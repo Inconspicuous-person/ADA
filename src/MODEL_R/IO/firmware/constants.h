@@ -59,14 +59,14 @@ struct Telemetry_downlink
     bool IO_ACCELGYRO_COMM;
     float batt_volts;
     float batt_amps;
-    char *checksum;
+    uint8_t checksum;
 };
 
 // Structure for uplink telemetry
 struct Telemetry_uplink
 {
     int ground_status;
-    char *checksum;
+    uint8_t checksum;
 };
 
 // Structure for uplink commands
@@ -99,12 +99,12 @@ struct Commands_uplink
     float motor_six_speed;
     int motor_steps;
     float turn_angle;
-    char *checksum;
+    uint8_t checksum;
 };
 
 // Structure for heartbeat payload
 struct Heartbeet
 {
     int status;
-    char *checksum;
+    uint8_t checksum;
 };

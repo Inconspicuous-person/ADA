@@ -2,8 +2,10 @@
 #include "constants.h"
 #include "classes.h"
 
-void setup() {
+IO_MCU IO;
 
+void setup() {
+IO.initialize(serial_LOW);
 }
 
 void loop() {
