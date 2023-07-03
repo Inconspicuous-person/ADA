@@ -17,7 +17,8 @@ byte stringChecksum(char *s);
 // Setup function, called once during initialization
 void setup()
 {
-    rover.init(); // Initialize all systems
+    pinMode(13,OUTPUT);
+    digitalWrite(13,rover.init()); // Initialize all systems
 }
 
 // Loop function, continuously executed

@@ -55,7 +55,7 @@ String DownlinkToCSV(const Telemetry_downlink &data)
     csvString += String(data.IO_ACCELGYRO_COMM) + ",";
     csvString += String(data.batt_volts) + ",";
     csvString += String(data.batt_amps) + ",";
-    csvString += String(data.checksum) + "\n";
+    csvString += String(data.checksum) + "\n\0";
 
     // Return the CSV string
     return csvString;
@@ -101,7 +101,7 @@ String UplinkToCSV(const Commands_uplink &data)
     csvString += String(data.motor_six_speed) + ",";
     csvString += String(data.motor_steps) + ",";
     csvString += String(data.turn_angle) + ",";
-    csvString += String(data.checksum);
+    csvString += String(data.checksum) + "\n\0";
 
     // Return the CSV string
     return csvString;
@@ -118,7 +118,7 @@ String TeleUplinkToCSV(const Telemetry_uplink &data)
 
     // Append the data values to the CSV string
     csvString += String(data.ground_status) + ",";
-    csvString += String(data.checksum);
+    csvString += String(data.checksum) + "\n\0";
 
     // Return the CSV string
     return csvString;
@@ -135,7 +135,7 @@ String HeartbeetToCSV(const Heartbeet &data)
 
     // Append the data values to the CSV string
     csvString += String(data.status) + ",";
-    csvString += String(data.checksum);
+    csvString += String(data.checksum) + "\n\0";
 
     // Return the CSV string
     return csvString;

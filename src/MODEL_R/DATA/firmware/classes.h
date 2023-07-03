@@ -9,10 +9,12 @@ bool waitc;
 bool acked;
 int CMD;
 
+void DATA_INT();
+
 void INT_PULSE()
 {
     digitalWrite(3, 1);
-    delay(50);
+    delay(200);
     digitalWrite(3, 0);
 }
 
@@ -26,68 +28,55 @@ private:
 
     void ACK()
     {
-        Serial.print("ACK");
+        Serial.print("ACK\0");
         INT_PULSE();
     }
 
     // Sends a request signal and waits for ACK
     bool REQ_ACK()
     {
-        Serial.print("REQ");
+        Serial.print("REQ\0");
         INT_PULSE();
         delay(10); // Let the IO MCU process the request
         for (int i; i < 3; i++)
         {
 
-                if (acked)
-                {
-                    return (1);
-                }
-                else
-                {
-                    return (0);
-                }
+            if (acked)
+            {
+                acked = false;
+                return (1);
+            }
+            else
+            {
+                return (0);
+            }
         }
         return (0);
     }
 
-    // Interrupt handler for receiving data
-    static void DATA_INT()
-    {
-        LastLastPayload = LastPayload;
-        LastPayload = Serial.readStringUntil('\n');
-        LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));
-        LastLastPayload.toCharArray(LastLastPayloadBuf, sizeof(LastLastPayload));
-        if (!waitc)
-        {
-            PARSE_CMD();
-        }
-        else
-        {
-            PARSE_DATA();
-        }
-    }
-
-    static void PARSE_DATA()
+public:
+    void PARSE_DATA()
     {
     }
 
-    static void PARSE_CMD()
+    void PARSE_CMD()
     {
         switch (djb2Hash(LastPayloadBuf))
         {
         case djb2Hash("REQ"):
             waitc = false;
-            Serial.println("ACK");
+            Serial.print("ACK\0");
             INT_PULSE();
             break;
-
+        case djb2Hash("ACK"):
+            waitc = false;
+            acked = true;
+            break;
         default:
             break;
         }
     }
 
-public:
     // Initializes the IO MCU with specified baud rate
 
     bool initialize(int baud)
@@ -100,3 +89,23 @@ public:
         return (REQ_ACK());
     }
 };
+
+IO_MCU IOM;
+
+// Interrupt handler for receiving data
+void DATA_INT()
+{
+    Serial.println("INT1"); // DEBUG ONLY
+    LastLastPayload = LastPayload;
+    LastPayload = Serial.readStringUntil('\n');
+    LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));
+    LastLastPayload.toCharArray(LastLastPayloadBuf, sizeof(LastLastPayload));
+    if (!waitc)
+    {
+        IOM.PARSE_CMD();
+    }
+    else
+    {
+        IOM.PARSE_DATA();
+    }
+}

@@ -9,10 +9,12 @@ String LastLastPayload;
 char *LastPayloadBuf;
 char *LastLastPayloadBuf;
 
+void DATA_INT();
+
 void INT_PULSE()
 {
     digitalWrite(3, 1);
-    delay(50);
+    delay(200);
     digitalWrite(3, 0);
 }
 
@@ -28,59 +30,53 @@ private:
 
     void ACK()
     {
-        Serial.print("ACK");
+        Serial.print("ACK\0");
         INT_PULSE();
     }
 
     // Sends a request signal and waits for ACK
     bool REQ_ACK()
     {
-        Serial.print("REQ");
+        Serial.print("REQ\0");
         INT_PULSE();
         delay(10); // Let the data MCU process the request
         for (int i; i < 3; i++)
         {
 
-                if (acked)
-                {
-                    return (1);
-                }
-                else
-                {
-                    return (0);
-                }
+            if (acked)
+            {
+                acked = false;
+                return (1);
             }
-       return (0);
+            else
+            {
+                return (0);
+            }
+        }
+        return (0);
     }
 
     // Interrupt handler for receiving data
-    static void DATA_INT()
-    {
-        LastLastPayload = LastPayload;
-        LastPayload = Serial.readStringUntil('\0');
-        LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));
-        LastLastPayload.toCharArray(LastLastPayloadBuf, sizeof(LastLastPayload));
-        if (!waitc)
-        {
-            PARSE_CMD();
-        }
-        else
-        {
-            PARSE_DATA();
-        }
-    }
 
-    static void PARSE_DATA()
+
+
+public:
+
+    void PARSE_DATA()
     {
     }
 
-    static void PARSE_CMD()
+    void PARSE_CMD()
     {
         switch (djb2Hash(LastPayloadBuf))
         {
         case djb2Hash("REQ"):
             waitc = false;
-            Serial.print("ACK");
+            Serial.print("ACK\0");
+            break;
+        case djb2Hash("ACK"):
+            waitc = false;
+            acked = true;
             break;
 
         default:
@@ -88,7 +84,6 @@ private:
         }
     }
 
-public:
     // Initializes the Data MCU with specified baud rate
     template <typename T>
 
@@ -113,7 +108,7 @@ public:
         waitc = false;
         Serial.begin(baud);
         pinMode(3, OUTPUT);
-        attachInterrupt(digitalPinToInterrupt(2), DATA_INT, RISING);
+        attachInterrupt(digitalPinToInterrupt(2), DATA_INT, CHANGE);
         delay(2000);
         return (REQ_ACK());
     }
@@ -121,7 +116,7 @@ public:
     // Serializes downlink telemetry payload and sends it
     String SerializeDownlink(Telemetry_downlink down_payload)
     {
-        Serial.print("ENCODE");
+        Serial.print("ENCODE\0");
         INT_PULSE();
         generateAndSetChecksum(down_payload);
         Serial.println(DownlinkToCSV(down_payload));
@@ -138,12 +133,12 @@ public:
     Data_MCU DATA;
 
     // Initializes the Rover by initializing the Data MCU
-    void init()
+    bool init()
     {
         switch (MCU_SERIAL) // Initialize DATA MCU at specified speed
         {
         case 1:
-            DATA.initialize(serial_LOW);
+            return (DATA.initialize(serial_LOW));
             break;
         case 2:
             DATA.initialize(serial_MED);
@@ -175,9 +170,27 @@ public:
     // Sends a heartbeat payload to the Data MCU
     void heartbeet(Heartbeet heartbeet)
     {
-        Serial.println("ENCODE");
+        Serial.println("ENCODE\0");
         DATA.generateAndSetChecksum(heartbeet);
         Serial.print(HeartbeetToCSV(heartbeet));
         INT_PULSE();
     }
 };
+
+Data_MCU DATA;
+
+void DATA_INT()
+{
+    LastLastPayload = LastPayload;
+    LastPayload = Serial.readStringUntil('\0');
+    LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));
+    LastLastPayload.toCharArray(LastLastPayloadBuf, sizeof(LastLastPayload));
+    if (!waitc)
+    {
+        DATA.PARSE_CMD();
+    }
+    else
+    {
+        DATA.PARSE_DATA();
+    }
+}
