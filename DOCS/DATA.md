@@ -8,7 +8,7 @@ The purpose of the data mcu is to have things such as json encoding and other re
 
 ## SECTION 2 -- CONNECTIONS
 
-Connected to the data mcu at the current stage shall only be a serial link to the IO mcu (A maximum of 1Mbps) for offloading. No other connections shall be made to the to the DATA mcu.
+Connected to the data mcu at the current stage shall only be a serial link to the IO mcu (A maximum of 1Mbps) for offloading. No other connections shall be made to the to the DATA mcu. An irq is set for pin 2 and tx irq on 3.
 
 ## SECTION 3 -- FIRMWARE
 

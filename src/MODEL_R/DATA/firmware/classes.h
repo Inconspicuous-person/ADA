@@ -13,9 +13,9 @@ void DATA_INT();
 
 void INT_PULSE()
 {
-    digitalWrite(3, 1);
-    delay(200);
     digitalWrite(3, 0);
+    delay(200);
+    digitalWrite(3, 1);
 }
 
 class IO_MCU
@@ -84,6 +84,7 @@ public:
         waitc = false;
         Serial.begin(baud);
         pinMode(3, OUTPUT);
+        digitalWrite(3, HIGH);
         attachInterrupt(digitalPinToInterrupt(2), DATA_INT, RISING);
         delay(2000);
         return (REQ_ACK());
@@ -95,9 +96,10 @@ IO_MCU IOM;
 // Interrupt handler for receiving data
 void DATA_INT()
 {
-    Serial.println("INT1"); // DEBUG ONLY
+    
     LastLastPayload = LastPayload;
     LastPayload = Serial.readStringUntil('\n');
+    Serial.print("INT1"); // DEBUG ONLY
     LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));
     LastLastPayload.toCharArray(LastLastPayloadBuf, sizeof(LastLastPayload));
     if (!waitc)

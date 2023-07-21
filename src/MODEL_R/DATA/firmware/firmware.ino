@@ -1,6 +1,7 @@
 #include <ArduinoJson.h>
 #include "constants.h"
 #include "classes.h"
+#include "ctj.h"
 
 IO_MCU IO;
 

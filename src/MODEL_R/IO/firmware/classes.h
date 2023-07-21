@@ -13,9 +13,9 @@ void DATA_INT();
 
 void INT_PULSE()
 {
-    digitalWrite(3, 1);
-    delay(200);
     digitalWrite(3, 0);
+    delay(200);
+    digitalWrite(3, 1);
 }
 
 // Class representing the Data MCU
@@ -108,6 +108,7 @@ public:
         waitc = false;
         Serial.begin(baud);
         pinMode(3, OUTPUT);
+        digitalWrite(3, HIGH);
         attachInterrupt(digitalPinToInterrupt(2), DATA_INT, CHANGE);
         delay(2000);
         return (REQ_ACK());
@@ -181,6 +182,7 @@ Data_MCU DATA;
 
 void DATA_INT()
 {
+    Serial.print("INT1");
     LastLastPayload = LastPayload;
     LastPayload = Serial.readStringUntil('\0');
     LastPayload.toCharArray(LastPayloadBuf, sizeof(LastPayload));

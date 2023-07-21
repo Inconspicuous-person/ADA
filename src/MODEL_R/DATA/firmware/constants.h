@@ -15,4 +15,3 @@ const char modules[10][2] = {}; // Not implemented. 10 is a placeholder
 #define light_channel_1 23
 #define light_channel_2 24
 #define light_channel_3 25
-#define light_channel_4 26
